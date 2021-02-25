@@ -3,9 +3,17 @@
 
 class Blackjack
 {
-private Player $player;
-private Player $dealer;
-private Deck $deck;
+    private Player $player;
+    private Dealer $dealer;
+    private Deck $deck;
+
+    public function __construct()
+    {
+        $this->deck = new Deck;
+        $this->deck->shuffle();
+        $this->player = new Player($this->getDeck());
+        $this->dealer = new Dealer($this->getDeck());
+    }
 
     /**
      * @return string
@@ -31,13 +39,18 @@ private Deck $deck;
         return $this->deck;
     }
 
-public function __construct(){
-$this->player = new Player($this->getDeck());
-$this->dealer = new Player($this->getDeck());
-$this->deck = new Deck;
+    public function showHandPlayer(): void {
+        foreach ($this->player->getCards() as $card) {
+            echo $card->getUnicodeCharacter(true);
+        }
+    }
+    public function showHandDealer(): void {
+        foreach ($this->dealer->getCards() as $card) {
+            echo $card->getUnicodeCharacter(true);
+        }
+    }
 
-$this->deck->shuffle();
 
-}
+
 
 }
