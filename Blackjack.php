@@ -50,6 +50,16 @@ class Blackjack
         }
     }
 
+    public function whoWins(){
+        if ($this->getPlayer()->hasLost()){
+            return "Dealer";
+        }
+        if ($this->getDealer()->hasLost()){
+            return "Player";
+        }
+        return "";
+    }
+
 
 
 

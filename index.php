@@ -1,5 +1,8 @@
 <?php
 declare(strict_types=1);
+ini_set('display_errors', '1');
+ini_set('display_startup_errors', '1');
+error_reporting(E_ALL);
 
 require 'Card.php';
 require 'Player.php';
@@ -8,55 +11,7 @@ require 'Deck.php';
 require 'Suit.php';
 session_start();
 
-
-if (!isset($_SESSION['Blackjack'])) {
-    $_SESSION['Blackjack'] = new Blackjack();
-}
-$blacky = $_SESSION['Blackjack'];
-$player = $_SESSION['Blackjack']->getPlayer();
-$dealer = $_SESSION['Blackjack']->getDealer();
 const TWENTY_ONE = 21;
-
-function whoWin($player, $dealer){
-    if(($player->getScore() ==  TWENTY_ONE && $dealer->getScore() == TWENTY_ONE) || $dealer->getScore() == TWENTY_ONE){
-        $player->surrender();
-        echo "You lost!";
-    } elseif ($player->getScore() > $dealer->getScore() || $player->getScore() == TWENTY_ONE){
-        $dealer->haslost(true);
-        echo "You won!";
-    } else {
-        $player->surrender();
-        echo "You lost!";
-    }
-}
-
-
-if (isset($_POST['start']) && $_SERVER['REQUEST_METHOD'] == "POST") {
-    echo "You start with " . $player->getScore() . " " . $blacky->showHandPlayer();
-    echo "The dealer starts with " . $dealer->getScore() . " " . $blacky->showHandDealer();
-
-    if (isset($_POST['hit'])) {
-        $player->hit($blacky->getDeck());
-        echo "You have " . $player->getScore();
-        if($player->isLost() == true){
-            whoWin($player, $dealer);
-        }
-    }
-
-    if (isset($_POST['stand'])) {
-        $dealer->hit($blacky->getDeck());
-        echo "The dealer has " . $dealer->getScore();
-        whoWin($player, $dealer);
-    }
-
-    if(isset($_POST['surrender'])){
-        $dealer->hasLost();
-        echo "You lose with " . $blacky->showHandPlayer() . "! The dealer has " . $blacky->showHandDealer();
-        unset($blacky);
-    }
-
-}
-
 
 function whatIsHappening()
 {
@@ -70,7 +25,63 @@ function whatIsHappening()
     var_dump($_SESSION);
 }
 
-whatIsHappening();
+/*
+function whoWins($player, $dealer)
+{
+    if (($player->getScore() == TWENTY_ONE && $dealer->getScore() == TWENTY_ONE) || $dealer->getScore() == TWENTY_ONE) {
+        $player->surrender();
+        echo "You lost!";
+    } elseif ($player->getScore() > $dealer->getScore() || $player->getScore() == TWENTY_ONE) {
+        $dealer->hasLost();
+        echo "You won!";
+    } else {
+        $player->surrender();
+        echo "You lost!";
+    }
+}*/
+
+
+if (!isset($_SESSION['Blackjack'])) {
+    $_SESSION['Blackjack'] = new Blackjack();
+}
+
+$blacky = $_SESSION['Blackjack'];
+$player = $_SESSION['Blackjack']->getPlayer();
+$dealer = $_SESSION['Blackjack']->getDealer();
+
+if (isset($_POST['action'])){
+    switch ($_POST['action']){
+        case 'hit':
+            $player->hit($blacky->getDeck());
+            if ($player->hasLost()){
+                $winner = 'Dealer!';
+            }
+            break;
+        case 'stand':
+            $dealer->hit($blacky->getDeck());
+            if ($player->hasLost()){
+                $winner = 'Dealer!';
+            } elseif ($dealer->hasLost()){
+                $winner = "Player!";
+            } elseif ($dealer->getScore() >= $player->getScore()){
+                $winner = "Dealer!";
+            } else {
+                $winner = "Player!";
+            }
+            break;
+        case 'surrender':
+            $player->surrender();
+            $winner = "Dealer";
+            break;
+        case 'start':
+            session_destroy();
+            header('location: index.php');
+            exit;
+        default:
+            die(sprintf('Something happened, unknown action %s', $_POST['action']));
+    }
+
+}
 ?>
 
 <!doctype html>
@@ -83,19 +94,58 @@ whatIsHappening();
     <title>Blackjack game</title>
 </head>
 <body>
+<?php
+if (isset($winner)):{
+    echo "<h2>" . "The winner is " . $winner . "</h2>";
+}
+
+/* if (isset($_POST['start']) && $_SERVER['REQUEST_METHOD'] == "POST") {
+    echo "You start with " . $player->getScore() . " " . $blacky->showHandPlayer();
+    echo "The dealer starts with " . $dealer->getScore() . " " . $blacky->showHandDealer();
+
+    if (isset($_POST['hit'])) {
+        $player->hit($blacky->getDeck());
+        echo "You have " . $player->getScore();
+        if ($player->isLost() == true) {
+            whoWins($player, $dealer);
+        }
+    }
+
+    if (isset($_POST['stand'])) {
+        $dealer->hit($blacky->getDeck());
+        echo "The dealer has " . $dealer->getScore();
+        whoWins($player, $dealer);
+    }
+
+    if (isset($_POST['surrender'])) {
+        $dealer->hasLost();
+        echo "You lose with " . $blacky->showHandPlayer() . "! The dealer has " . $blacky->showHandDealer();
+
+    }
+
+}*/
+?>
+<?php endif ?>
+<body>
 <form method="post" action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]) ?>">
-    <div class="cards">
-        <?php //echo $blacky->showHandPlayer() . $blacky->showHandDealer(); ?>
+    <div class="player">
+        <h3>Player's Cards</h3>
+        <?php echo $blacky->showHandPlayer();  ?>
     </div>
+    <div class="dealer">
+        <h3>Dealer's Cards</h3>
+        <?php echo $blacky->showHandDealer(); ?>
+    </div>
+    <fieldset>
+        <button type="submit" name="action" value="hit">Hit me!</button>
+        <button type="submit" name="action" value="stand">Stand!</button>
+        <button type="submit" name="action" value="surrender">Surrender!</button>
+        <button type="submit" name="action" value="start">Start Game</button>
+    </fieldset>
     <div>
-        <label>Hit me</label>
-        <input type="button" name="hit"/>
-        <label>Stand</label>
-        <input type="button" name="stand"/>
-        <label>Surrender</label>
-        <input type="button" name="surrender"/>
-        <label>Start Game</label>
-        <input type="button" name="start"/>
+        <h3>The Score</h3>
+        <h4>Player's:<?php echo $player->getScore(); ?></h4>
+        <h4>Dealer's:<?php echo $dealer->getScore(); ?></h4>
     </div>
 </form>
 </body>

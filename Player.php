@@ -5,18 +5,20 @@
 
 class Player
 {
-    private const BEST_VALUE = 21;
+    const BEST_VALUE = 21;
     private const MIN_START_CARDS = 2;
     private array $cards = [];
-    private bool $lost = false;
+    protected bool $lost = false;
 
     public function hit(Deck $deck): void
     {
-        $deck->drawCard();
+        $this->cards[] = $deck->drawCard();
+        $this->lost = $this->getScore() > self::BEST_VALUE;
+       /* $deck->drawCard();
         $this->getScore();
         if ($this->getScore() > self::BEST_VALUE) {
             $this->lost = true;
-        }
+        }*/
     }
 
 
@@ -70,12 +72,13 @@ class Dealer extends Player
 {
     private const MIN_DEALER_VALUE = 15;
 
-    public function hit(Deck $deck): void
+    public function hit($deck): void
     {
         while ($this->getScore() < self::MIN_DEALER_VALUE) {
             parent::hit($deck);
 
         }
+        $this->lost = $this->getScore() > self::BEST_VALUE;
     }
 
 }
